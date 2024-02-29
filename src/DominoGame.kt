@@ -63,21 +63,16 @@ class DominoGame(private val players: List<String>) {
         return null
     }
 
-    fun drawFromStock(player: String) {
-        if (stock.isNotEmpty()) {
-            val drawnDomino = stock.removeAt(Random.nextInt(stock.size))
-            println("$player draws: $drawnDomino")
-            hands[player]?.add(drawnDomino)
-        } else println("Stock is empty, $player cannot draw.")
-    }
 
     fun playDomino(player: String, domino: Domino) {
         if (hands[player]?.contains(domino) == true) {
-            print("$player plays: $domino edges: ($leftExtreme ; $rightExtreme) -> ")
+            //print("$player plays: $domino edges: ($leftExtreme ; $rightExtreme) -> ")
+            println("$player plays: $domino")
             hands[player]?.remove(domino)
             updateEdges(domino)
-            println("($leftExtreme ; $rightExtreme)")
-        } else println("$player does not have $domino in hand.")
+            //val cnt = hands[player]?.size
+            //println("($leftExtreme ; $rightExtreme) cnt: ($cnt)")
+        } //else println("$player does not have $domino in hand.")
     }
 
     fun nextPlayer() {
@@ -117,12 +112,23 @@ class DominoGame(private val players: List<String>) {
             rightExtreme = domino.left
         }
     }
+    fun calculateHandScore(hand: List<Domino>): Int {
+        var score = 0
+        hand.forEach {
+            score += if (it.left == 0 && it.right == 0) {
+                25
+            } else {
+                it.left + it.right
+            }
+        }
+        return score
+    }
 
     fun playRandomDomino(player: String) {
         val playerHand = hands[player]
 
         if (playerHand.isNullOrEmpty()) {
-            //println("$player does not have dominoes to play.")
+            println("$player does not have dominoes to play.")
             return
         }
 
@@ -130,20 +136,32 @@ class DominoGame(private val players: List<String>) {
 
         if (playableDominos.isEmpty()) {
             //println("$player does not have dominoes to play.")
+            if (stock.isEmpty()) {
+                if (hands.all { hand -> hand.value.none { domino -> isDominoPlayable(domino) } }) {
+                    val scores = hands.map { (player, hand) ->
+                        val playerScore = calculateHandScore(hand)
+                        player to playerScore
+                    }
+                    val minScorePlayer = scores.minByOrNull { it.second }?.first
+                    println("All players are in a stalemate. $minScorePlayer wins with the lowest hand score.")
+                    gameOver = true
+                    return
+                }
+                //println("Stock is empty, the game ends in a draw.")
+                gameOver = true
+                return
+            }
             while (stock.isNotEmpty()) {
                 val drawnDomino = stock.removeAt(Random.nextInt(stock.size))
                 println("$player draws: $drawnDomino")
                 hands[player]?.add(drawnDomino)
 
                 if (isDominoPlayable(drawnDomino)) {
-                    print("$player plays: $drawnDomino edges: ($leftExtreme ; $rightExtreme) -> ")
-                    hands[player]?.remove(drawnDomino)
-                    updateEdges(drawnDomino)
-                    println("($leftExtreme ; $rightExtreme)")
+                    playDomino(player,drawnDomino)
                     return
                 }
             }
-            println("Stock is empty, $player cannot draw.")
+            //println("Stock is empty, $player cannot draw.")
             return
         }
 
