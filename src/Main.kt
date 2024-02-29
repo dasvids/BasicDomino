@@ -1,5 +1,6 @@
-
-
 fun main() {
-    println("Hello World!")
+    val players = listOf("Alice", "Bob")
+
+    val game = DominoGame(players)
+    game.randomSimulate()
 }
